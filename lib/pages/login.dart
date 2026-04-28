@@ -29,6 +29,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -47,13 +48,15 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+
+      if (mounted) Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? "Google Sign-In failed")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An unexpected error occurred")),
+        SnackBar(content: Text("Sign-In error: ${e.toString()}")),
       );
     } finally {
       if (mounted) {
@@ -81,6 +84,8 @@ class _LoginPageState extends State<LoginPage> {
         email: emailAddress.text.trim(),
         password: password.text.trim(),
       );
+
+      if (mounted) Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       String message = "Login failed";
 
@@ -282,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
                           const Text("Don't have an account?"),
                           TextButton(
                             onPressed: () {
-                              Navigator.push(
+                              Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => const RegisterPage(),

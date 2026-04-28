@@ -41,6 +41,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -59,13 +60,16 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+
+      if (mounted) Navigator.pop(context);
+
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? "Google Sign-In failed")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("An unexpected error occurred")),
+        SnackBar(content: Text("Sign-In error: ${e.toString()}")),
       );
     } finally {
       if (mounted) {
@@ -95,6 +99,9 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       await FirebaseAuth.instance.currentUser!
           .updateDisplayName(nameController.text.trim());
+
+      if (mounted) Navigator.pop(context);
+
     } on FirebaseAuthException catch (e) {
       String message = "Registration failed";
 
@@ -168,7 +175,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                       const SizedBox(height: 25),
-                      // New Name input
                       TextFormField(
                         controller: nameController,
                         keyboardType: TextInputType.name,
@@ -352,7 +358,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const Text('Already have an account?'),
                           TextButton(
                             onPressed: () {
-                              Navigator.push(
+                              Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => const LoginPage(),

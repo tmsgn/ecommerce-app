@@ -14,6 +14,9 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final color = Theme.of(context).colorScheme;
+
     return SizedBox(
       width: 75,
       child: Column(
@@ -23,14 +26,18 @@ class CategoryCard extends StatelessWidget {
             width: 65,
             height: 65,
             decoration: BoxDecoration(
-              color: backgroundColor,
+              color: isDarkMode
+                  ? backgroundColor.withOpacity(0.2)
+                  : backgroundColor,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Icon(
                 icon,
                 size: 32,
-                color: Colors.black87,
+                color: isDarkMode
+                    ? backgroundColor.withOpacity(0.9)
+                    : Colors.black87,
               ),
             ),
           ),
@@ -39,10 +46,10 @@ class CategoryCard extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: color.inversePrimary,
             ),
           ),
         ],

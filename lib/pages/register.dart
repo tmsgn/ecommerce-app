@@ -1,4 +1,4 @@
-import 'package:ecommerce/pages/login.dart';
+import 'package:ecommerce/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -35,95 +35,70 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> signInWithGoogle(BuildContext context) async {
-    setState(() {
-      isGoogleLoading = true;
-    });
-
+    setState(() => isGoogleLoading = true);
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
       await googleSignIn.signOut();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
       if (googleUser == null) {
-        setState(() {
-          isGoogleLoading = false;
-        });
+        setState(() => isGoogleLoading = false);
         return;
       }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
+      final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-
-      if (mounted) Navigator.pop(context);
-
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Google Sign-In failed")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Sign-In error: ${e.toString()}")),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          isGoogleLoading = false;
-        });
+      final result = await FirebaseAuth.instance.signInWithCredential(credential);
+      final user = result.user;
+      if (user != null) {
+        await FirestoreService().createUserProfile(
+          uid: user.uid,
+          name: user.displayName ?? '',
+          email: user.email ?? '',
+          photoURL: user.photoURL ?? '',
+        );
       }
+      if (mounted) Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? 'Google Sign-In failed')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sign-In error: ${e.toString()}')));
+    } finally {
+      if (mounted) setState(() => isGoogleLoading = false);
     }
   }
 
   Future<void> register(BuildContext context) async {
     if (!_formKey.currentState!.validate()) {
-      setState(() {
-        _autoValidate = AutovalidateMode.onUserInteraction;
-      });
+      setState(() => _autoValidate = AutovalidateMode.onUserInteraction);
       return;
     }
-
-    setState(() {
-      isLoading = true;
-    });
-
+    setState(() => isLoading = true);
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final result = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailAddress.text.trim(),
         password: password.text.trim(),
       );
-      await FirebaseAuth.instance.currentUser!
-          .updateDisplayName(nameController.text.trim());
-
-      if (mounted) Navigator.pop(context);
-
-    } on FirebaseAuthException catch (e) {
-      String message = "Registration failed";
-
-      if (e.code == 'weak-password') {
-        message = "The password is too weak";
-      } else if (e.code == 'email-already-in-use') {
-        message = "Email already in use";
-      } else if (e.code == 'invalid-email') {
-        message = "Invalid email";
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+      await result.user!.updateDisplayName(nameController.text.trim());
+      // Save user profile to Firestore
+      await FirestoreService().createUserProfile(
+        uid: result.user!.uid,
+        name: nameController.text.trim(),
+        email: emailAddress.text.trim(),
       );
+      if (mounted) Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      String message = 'Registration failed';
+      if (e.code == 'weak-password') message = 'The password is too weak';
+      else if (e.code == 'email-already-in-use') message = 'Email already in use';
+      else if (e.code == 'invalid-email') message = 'Invalid email';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -358,12 +333,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const Text('Already have an account?'),
                           TextButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginPage(),
-                                ),
-                              );
+                              Navigator.pop(context);
                             },
                             child: Text(
                               'Login',

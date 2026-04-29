@@ -13,52 +13,45 @@ class BottomTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: color.primary.withOpacity(isDarkMode ? 0.2 : 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12),
         child: GNav(
-          rippleColor: Colors.grey.shade300,
-          hoverColor: Colors.grey.shade100,
+          rippleColor: color.primary.withOpacity(0.15),
+          hoverColor: color.primary.withOpacity(0.1),
           gap: 6,
-          activeColor: const Color(0xFF5A44FF), // Purple matched to active icon
-          iconSize: 24,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          activeColor: color.primary,
+          iconSize: 22,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           duration: const Duration(milliseconds: 300),
-          tabBackgroundColor: const Color(0xFF5A44FF).withOpacity(0.1),
-          color: Colors.grey.shade600,
+          tabBackgroundColor: color.primary.withOpacity(0.12),
+          color: color.inversePrimary.withOpacity(0.4),
+          textStyle: TextStyle(
+            color: color.primary,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
           tabs: const [
-            GButton(
-              icon: Icons.home,
-              text: 'Home',
-            ),
-            GButton(
-              icon: Icons.grid_view_rounded,
-              text: 'Categories',
-            ),
-            GButton(
-              icon: Icons.favorite_border,
-              text: 'Wishlist',
-            ),
-            GButton(
-              icon: Icons.shopping_bag_outlined,
-              text: 'Orders',
-            ),
-            GButton(
-              icon: Icons.person_outline,
-              text: 'Profile',
-            ),
+            GButton(icon: Icons.home_rounded, text: 'Home'),
+            GButton(icon: Icons.grid_view_rounded, text: 'Categories'),
+            GButton(icon: Icons.favorite_rounded, text: 'Wishlist'),
+            GButton(icon: Icons.receipt_long_rounded, text: 'Orders'),
+            GButton(icon: Icons.person_rounded, text: 'Profile'),
           ],
           selectedIndex: selectedIndex,
           onTabChange: onTabChange,

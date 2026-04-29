@@ -48,8 +48,6 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-
-      if (mounted) Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? "Google Sign-In failed")),
@@ -84,8 +82,6 @@ class _LoginPageState extends State<LoginPage> {
         email: emailAddress.text.trim(),
         password: password.text.trim(),
       );
-
-      if (mounted) Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       String message = "Login failed";
 
@@ -287,7 +283,7 @@ class _LoginPageState extends State<LoginPage> {
                           const Text("Don't have an account?"),
                           TextButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => const RegisterPage(),

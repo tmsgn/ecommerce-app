@@ -12,144 +12,152 @@ class _PromoCarouselState extends State<PromoCarousel> {
   int currentIndex = 0;
 
   Widget _buildCarouselItem({
+    required BuildContext context,
     required String title,
     required String headline,
     required String subtitle,
-    required List<Color> colors,
+    required Color bgColor,
     required Widget imageWidget,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      child: ClipRRect(
+      decoration: BoxDecoration(
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.white.withOpacity(0.8),
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    headline,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      "Shop Now",
+                      style: TextStyle(
+                        color: bgColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.yellowAccent,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        headline,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          "Shop Now",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: imageWidget,
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: imageWidget,
           ),
-        ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return CarouselSlider(
-      items: [
-        // Item 1 (Original)
-        _buildCarouselItem(
-          title: "Special Offer",
-          headline: "Up to 50% OFF",
-          subtitle: "On selected items",
-          colors: const [Color(0xFF6A5AE0), Color(0xFF8A5CFF)],
-          imageWidget: Image.asset(
-            "lib/assets/bag.png",
-            width: 120,
-            fit: BoxFit.contain,
+    return Column(
+      children: [
+        CarouselSlider(
+          items: [
+            _buildCarouselItem(
+              context: context,
+              title: "Special Offer",
+              headline: "Up to 50% OFF",
+              subtitle: "On selected items",
+              bgColor: const Color(0xFF111827), // Deep black
+              imageWidget: Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.white.withOpacity(0.9)),
+            ),
+            _buildCarouselItem(
+              context: context,
+              title: "New Arrivals",
+              headline: "Smart\nWatches",
+              subtitle: "Starting from \$89",
+              bgColor: const Color(0xFF4B5563), // Slate gray
+              imageWidget: Icon(Icons.watch_outlined, size: 80, color: Colors.white.withOpacity(0.9)),
+            ),
+            _buildCarouselItem(
+              context: context,
+              title: "Weekend Sale",
+              headline: "Premium\nAudio",
+              subtitle: "Get extra 20% OFF",
+              bgColor: const Color(0xFF374151), // Dark gray
+              imageWidget: Icon(Icons.headphones_outlined, size: 80, color: Colors.white.withOpacity(0.9)),
+            ),
+          ],
+          options: CarouselOptions(
+            height: 180,
+            viewportFraction: 0.95,
+            enableInfiniteScroll: true,
+            autoPlay: true,
+            autoPlayInterval: const Duration(seconds: 5),
+            onPageChanged: (index, reason) {
+              setState(() => currentIndex = index);
+            },
           ),
         ),
-        // Item 2
-        _buildCarouselItem(
-          title: "New Arrivals",
-          headline: "Smart Watches",
-          subtitle: "Starting from \$89",
-          colors: const [Color(0xFFFE7474), Color(0xFFFF9B9B)],
-          imageWidget: const Icon(
-            Icons.watch,
-            size: 100,
-            color: Colors.white,
-          ),
-        ),
-        // Item 3
-        _buildCarouselItem(
-          title: "Weekend Sale",
-          headline: "Audio Gear",
-          subtitle: "Get extra 20% OFF",
-          colors: const [Color(0xFF38B29C), Color(0xFF55E3CB)],
-          imageWidget: const Icon(
-            Icons.headphones,
-            size: 100,
-            color: Colors.white,
+        const SizedBox(height: 12),
+        // Custom sleek dot indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            3,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              height: 4,
+              width: currentIndex == index ? 24 : 8,
+              decoration: BoxDecoration(
+                color: currentIndex == index 
+                    ? Theme.of(context).colorScheme.primary 
+                    : Theme.of(context).colorScheme.tertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
         ),
       ],
-      options: CarouselOptions(
-        height: 180,
-        viewportFraction: 1,
-        onPageChanged: (index, reason) {
-          setState(() {
-            currentIndex = index;
-          });
-        },
-      ),
     );
   }
 }

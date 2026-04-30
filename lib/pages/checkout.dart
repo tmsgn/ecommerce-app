@@ -44,8 +44,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final address =
-        '${_nameController.text}, ${_addressController.text}, ${_cityController.text} ${_zipController.text}';
+    final address = '${_nameController.text}, ${_addressController.text}, ${_cityController.text} ${_zipController.text}';
 
     try {
       await FirestoreService().placeOrder(
@@ -56,15 +55,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
       );
 
       if (context.mounted) {
-        // Clear cart provider
         context.read<CartProvider>().clearCart();
         _showSuccessDialog();
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error placing order: $e')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error placing order: $e')));
       }
     } finally {
       if (mounted) setState(() => _isPlacingOrder = false);
@@ -77,49 +73,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: color.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Colors.green.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle, color: Colors.green, size: 56),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Order Placed!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: color.inversePrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Your order is being processed. You can track it in the Orders tab.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: color.inversePrimary.withOpacity(0.6)),
+              child: const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
             ),
             const SizedBox(height: 24),
+            Text('Order Confirmed', style: Theme.of(context).textTheme.headlineMedium),
+            const SizedBox(height: 12),
+            Text(
+              'Your order has been placed successfully. You can track it in the Orders tab.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: color.secondary, height: 1.5),
+            ),
+            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Pop checkout and cart to go back to home
-                  Navigator.of(context)
-                    ..pop()
-                    ..pop()
-                    ..pop();
+                  Navigator.of(context)..pop()..pop()..pop();
                 },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
                 child: const Text('Back to Home'),
               ),
             ),
@@ -132,46 +113,37 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: color.surface,
       appBar: AppBar(
-        title: Text(
-          'Checkout',
-          style: TextStyle(fontWeight: FontWeight.bold, color: color.inversePrimary),
-        ),
+        title: Text('Checkout', style: Theme.of(context).textTheme.displaySmall),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: color.inversePrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Shipping Address
-              Text(
-                'Shipping Address',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color.inversePrimary),
-              ),
+              Text('SHIPPING ADDRESS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color.secondary, letterSpacing: 1.2)),
               const SizedBox(height: 16),
               _buildField(
                 controller: _nameController,
                 label: 'Full Name',
-                icon: Icons.person_outline,
-                validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _buildField(
                 controller: _addressController,
                 label: 'Street Address',
-                icon: Icons.home_outlined,
-                validator: (v) => v == null || v.isEmpty ? 'Address is required' : null,
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -179,47 +151,41 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     child: _buildField(
                       controller: _cityController,
                       label: 'City',
-                      icon: Icons.location_city_outlined,
                       validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: _buildField(
                       controller: _zipController,
                       label: 'ZIP',
-                      icon: Icons.pin_outlined,
                       keyboardType: TextInputType.number,
                       validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 40),
 
-              // ── Order Summary
-              Text(
-                'Order Summary',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color.inversePrimary),
-              ),
-              const SizedBox(height: 12),
+              Text('ORDER SUMMARY', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color.secondary, letterSpacing: 1.2)),
+              const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF252540) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: color.tertiary),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   children: [
                     ...widget.cartItems.map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
                                 child: Text(
-                                  '${item.title} x${item.quantity}',
-                                  style: TextStyle(color: color.inversePrimary.withOpacity(0.8)),
+                                  '${item.quantity}x ${item.title}',
+                                  style: TextStyle(color: color.secondary),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -230,45 +196,43 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             ],
                           ),
                         )),
-                    Divider(color: color.primary.withOpacity(0.1)),
+                    const SizedBox(height: 8),
+                    Divider(color: color.tertiary, height: 1),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color.inversePrimary)),
                         Text(
                           '\$${widget.totalAmount.toStringAsFixed(2)}',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color.primary),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color.inversePrimary),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-
-              // ── Place Order Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isPlacingOrder ? null : _placeOrder,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: _isPlacingOrder
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : Text(
-                          'Place Order — \$${widget.totalAmount.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 20),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        decoration: BoxDecoration(
+          color: color.surface,
+          border: Border(top: BorderSide(color: color.tertiary, width: 0.5)),
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isPlacingOrder ? null : _placeOrder,
+            child: _isPlacingOrder
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : Text('Place Order — \$${widget.totalAmount.toStringAsFixed(2)}'),
           ),
         ),
       ),
@@ -278,7 +242,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget _buildField({
     required TextEditingController controller,
     required String label,
-    required IconData icon,
     String? Function(String?)? validator,
     TextInputType keyboardType = TextInputType.text,
   }) {
@@ -286,10 +249,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20),
-      ),
+      decoration: InputDecoration(labelText: label),
     );
   }
 }

@@ -11,64 +11,48 @@ class WishlistPage extends StatelessWidget {
     final color = Theme.of(context).colorScheme;
     final wishlist = context.watch<WishlistProvider>();
 
-    return wishlist.items.isEmpty
-        ? _buildEmpty(context, color)
-        : CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('My Wishlist',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color.inversePrimary)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: color.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${wishlist.itemCount} items',
-                          style: TextStyle(color: color.primary, fontWeight: FontWeight.w600, fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
+    return Scaffold(
+      backgroundColor: color.surface,
+      appBar: AppBar(
+        title: Text('Wishlist', style: Theme.of(context).textTheme.displaySmall),
+        centerTitle: false,
+        actions: [
+          if (wishlist.items.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: Text(
+                  '${wishlist.itemCount} items',
+                  style: TextStyle(color: color.secondary, fontWeight: FontWeight.w600, fontSize: 13),
                 ),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.72,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (ctx, i) => ProductCard(product: wishlist.items[i]),
-                    childCount: wishlist.items.length,
-                  ),
-                ),
-              ),
-            ],
-          );
-  }
-
-  Widget _buildEmpty(BuildContext context, ColorScheme color) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.favorite_border, size: 80, color: color.primary.withOpacity(0.3)),
-          const SizedBox(height: 16),
-          Text('No saved items', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color.inversePrimary)),
-          const SizedBox(height: 8),
-          Text('Tap ♡ on any product to save it here.', style: TextStyle(color: color.inversePrimary.withOpacity(0.5))),
+            ),
         ],
       ),
+      body: wishlist.items.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.favorite_border, size: 64, color: color.tertiary),
+                  const SizedBox(height: 24),
+                  Text('Your wishlist is empty', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Text('Tap the heart on any product to save it.', style: TextStyle(color: color.secondary)),
+                ],
+              ),
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.65,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: wishlist.items.length,
+              itemBuilder: (ctx, i) => ProductCard(product: wishlist.items[i]),
+            ),
     );
   }
 }

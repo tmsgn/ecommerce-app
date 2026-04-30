@@ -11,12 +11,12 @@ class CartPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cart = context.watch<CartProvider>();
 
     return Scaffold(
+      backgroundColor: color.surface,
       appBar: AppBar(
-        title: Text('My Cart', style: TextStyle(fontWeight: FontWeight.bold, color: color.inversePrimary)),
+        title: Text('Cart', style: Theme.of(context).textTheme.displaySmall),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: color.inversePrimary),
           onPressed: () => Navigator.pop(context),
@@ -25,8 +25,9 @@ class CartPage extends StatelessWidget {
           if (cart.items.isNotEmpty)
             TextButton(
               onPressed: () => cart.clearCart(),
-              child: Text('Clear all', style: TextStyle(color: color.secondary)),
+              child: Text('Clear', style: TextStyle(color: color.secondary, fontWeight: FontWeight.w600)),
             ),
+          const SizedBox(width: 8),
         ],
       ),
       body: cart.items.isEmpty
@@ -34,13 +35,17 @@ class CartPage extends StatelessWidget {
           : Column(
               children: [
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(20),
                     itemCount: cart.items.length,
+                    separatorBuilder: (_, __) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Divider(color: color.tertiary, height: 1),
+                    ),
                     itemBuilder: (context, index) => _CartItemTile(item: cart.items[index]),
                   ),
                 ),
-                _buildOrderSummary(context, cart, color, isDark),
+                _buildOrderSummary(context, cart, color),
               ],
             ),
     );
@@ -51,55 +56,52 @@ class CartPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined, size: 80, color: color.primary.withOpacity(0.3)),
-          const SizedBox(height: 16),
-          Text('Your cart is empty', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color.inversePrimary)),
-          const SizedBox(height: 8),
-          Text('Add some products to get started!', style: TextStyle(color: color.inversePrimary.withOpacity(0.5))),
+          Icon(Icons.shopping_bag_outlined, size: 64, color: color.tertiary),
           const SizedBox(height: 24),
-          ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Start Shopping')),
+          Text('Your cart is empty', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text('Add some items to get started.', style: TextStyle(color: color.secondary)),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Continue Shopping'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildOrderSummary(BuildContext context, CartProvider cart, ColorScheme color, bool isDark) {
+  Widget _buildOrderSummary(BuildContext context, CartProvider cart, ColorScheme color) {
     final subtotal = cart.totalAmount;
     final shipping = subtotal > 50 ? 0.0 : 5.99;
     final total = subtotal + shipping;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, -4))],
+        color: color.surface,
+        border: Border(top: BorderSide(color: color.tertiary, width: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Order Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color.inversePrimary)),
+          Text('Order Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color.inversePrimary, letterSpacing: 0.5)),
+          const SizedBox(height: 16),
+          _summaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}', color),
           const SizedBox(height: 12),
-          _summaryRow('Subtotal (${cart.itemCount} items)', '\$${subtotal.toStringAsFixed(2)}', color),
-          const SizedBox(height: 6),
-          _summaryRow('Shipping', shipping == 0 ? 'FREE' : '\$${shipping.toStringAsFixed(2)}', color,
-              valueColor: shipping == 0 ? Colors.green : null),
-          if (shipping > 0) ...[
-            const SizedBox(height: 4),
-            Text('Free shipping on orders over \$50', style: const TextStyle(fontSize: 11, color: Colors.green, fontStyle: FontStyle.italic)),
-          ],
-          const SizedBox(height: 12),
-          Divider(color: color.primary.withOpacity(0.1)),
-          const SizedBox(height: 8),
+          _summaryRow('Shipping', shipping == 0 ? 'FREE' : '\$${shipping.toStringAsFixed(2)}', color),
+          const SizedBox(height: 16),
+          Divider(color: color.tertiary, height: 1),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color.inversePrimary)),
-              Text('\$${total.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: color.primary)),
+              Text('\$${total.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: color.inversePrimary)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -107,11 +109,7 @@ class CartPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (_) => CheckoutPage(cartItems: cart.items, totalAmount: total)),
               ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              child: const Text('Proceed to Checkout', style: TextStyle(fontSize: 16)),
+              child: const Text('Proceed to Checkout'),
             ),
           ),
         ],
@@ -119,12 +117,12 @@ class CartPage extends StatelessWidget {
     );
   }
 
-  Widget _summaryRow(String label, String value, ColorScheme color, {Color? valueColor}) {
+  Widget _summaryRow(String label, String value, ColorScheme color) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 14, color: color.inversePrimary.withOpacity(0.6))),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: valueColor ?? color.inversePrimary)),
+        Text(label, style: TextStyle(fontSize: 14, color: color.secondary)),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color.inversePrimary)),
       ],
     );
   }
@@ -137,83 +135,89 @@ class _CartItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cart = context.read<CartProvider>();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF252540) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.04), blurRadius: 8)],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: 80,
-              height: 80,
-              color: isDark ? color.tertiary : const Color(0xFFF0EEFF),
-              child: item.imageUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: item.imageUrl,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => Icon(Icons.image_outlined, color: color.primary.withOpacity(0.3)),
-                    )
-                  : Icon(Icons.image_outlined, color: color.primary.withOpacity(0.3)),
-            ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: 80,
+            height: 100,
+            color: color.tertiary.withOpacity(0.3),
+            child: item.imageUrl.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: item.imageUrl,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => Icon(Icons.image_outlined, color: color.inversePrimary.withOpacity(0.2)),
+                  )
+                : Icon(Icons.image_outlined, color: color.inversePrimary.withOpacity(0.2)),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.w600, color: color.inversePrimary)),
-                const SizedBox(height: 4),
-                Text('\$${item.price.toStringAsFixed(2)}', style: TextStyle(color: color.primary, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _qtyBtn(Icons.remove, () => cart.updateQuantity(item.productId, item.quantity - 1), color),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('${item.quantity}', style: TextStyle(fontWeight: FontWeight.bold, color: color.inversePrimary)),
-                    ),
-                    _qtyBtn(Icons.add, () => cart.updateQuantity(item.productId, item.quantity + 1), color),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                onPressed: () => cart.removeFromCart(item.productId),
-                icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontWeight: FontWeight.w600, color: color.inversePrimary, fontSize: 14),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('\$${item.price.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: color.inversePrimary)),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text('\$${item.totalPrice.toStringAsFixed(2)}',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: color.inversePrimary)),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: color.tertiary),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      children: [
+                        _qtyBtn(Icons.remove, () => cart.updateQuantity(item.productId, item.quantity - 1), color),
+                        Container(
+                          width: 32,
+                          alignment: Alignment.center,
+                          child: Text('${item.quantity}', style: TextStyle(fontWeight: FontWeight.w600, color: color.inversePrimary)),
+                        ),
+                        _qtyBtn(Icons.add, () => cart.updateQuantity(item.productId, item.quantity + 1), color),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => cart.removeFromCart(item.productId),
+                    child: Text(
+                      'Remove',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color.secondary),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _qtyBtn(IconData icon, VoidCallback onTap, ColorScheme color) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(color: color.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-        child: Icon(icon, size: 16, color: color.primary),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Icon(icon, size: 14, color: color.inversePrimary),
       ),
     );
   }

@@ -3,41 +3,35 @@ import 'package:flutter/material.dart';
 class CategoryCard extends StatelessWidget {
   final String title;
   final IconData icon;
-  final Color backgroundColor;
 
   const CategoryCard({
     super.key,
     required this.title,
     required this.icon,
-    required this.backgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final color = Theme.of(context).colorScheme;
 
     return SizedBox(
-      width: 75,
+      width: 72,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 65,
-            height: 65,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
-              color: isDarkMode
-                  ? backgroundColor.withOpacity(0.2)
-                  : backgroundColor,
+              color: color.tertiary.withOpacity(0.3),
               shape: BoxShape.circle,
+              border: Border.all(color: color.tertiary.withOpacity(0.5)),
             ),
             child: Center(
               child: Icon(
                 icon,
-                size: 32,
-                color: isDarkMode
-                    ? backgroundColor.withOpacity(0.9)
-                    : Colors.black87,
+                size: 24,
+                color: color.inversePrimary,
               ),
             ),
           ),
@@ -47,7 +41,7 @@ class CategoryCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
               color: color.inversePrimary,
             ),

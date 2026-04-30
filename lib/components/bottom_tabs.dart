@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 
 class BottomTabs extends StatelessWidget {
   final int selectedIndex;
@@ -14,47 +13,55 @@ class BottomTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: color.primary.withOpacity(isDarkMode ? 0.2 : 0.12),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: color.surface,
+        border: Border(top: BorderSide(color: color.tertiary, width: 0.5)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12),
-        child: GNav(
-          rippleColor: color.primary.withOpacity(0.15),
-          hoverColor: color.primary.withOpacity(0.1),
-          gap: 6,
-          activeColor: color.primary,
-          iconSize: 22,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          duration: const Duration(milliseconds: 300),
-          tabBackgroundColor: color.primary.withOpacity(0.12),
-          color: color.inversePrimary.withOpacity(0.4),
-          textStyle: TextStyle(
-            color: color.primary,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-          tabs: const [
-            GButton(icon: Icons.home_rounded, text: 'Home'),
-            GButton(icon: Icons.grid_view_rounded, text: 'Categories'),
-            GButton(icon: Icons.favorite_rounded, text: 'Wishlist'),
-            GButton(icon: Icons.receipt_long_rounded, text: 'Orders'),
-            GButton(icon: Icons.person_rounded, text: 'Profile'),
-          ],
+      child: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          backgroundColor: color.surface,
+          indicatorColor: color.primary.withOpacity(0.08),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color.primary);
+            }
+            return TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color.secondary);
+          }),
+        ),
+        child: NavigationBar(
+          height: 65,
+          elevation: 0,
           selectedIndex: selectedIndex,
-          onTabChange: onTabChange,
+          onDestinationSelected: onTabChange,
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined, color: color.secondary),
+              selectedIcon: Icon(Icons.home, color: color.primary),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.grid_view_outlined, color: color.secondary),
+              selectedIcon: Icon(Icons.grid_view, color: color.primary),
+              label: 'Categories',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.favorite_border, color: color.secondary),
+              selectedIcon: Icon(Icons.favorite, color: color.primary),
+              label: 'Wishlist',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined, color: color.secondary),
+              selectedIcon: Icon(Icons.receipt_long, color: color.primary),
+              label: 'Orders',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline, color: color.secondary),
+              selectedIcon: Icon(Icons.person, color: color.primary),
+              label: 'Profile',
+            ),
+          ],
         ),
       ),
     );

@@ -20,39 +20,28 @@ class AuthPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [color.primary, color.secondary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.shopping_bag_rounded,
-                      size: 48,
-                      color: Colors.white,
-                    ),
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 48,
+                    color: color.inversePrimary,
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'ShopEase',
+                    'SHOPEASE',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: color.primary,
-                      letterSpacing: -0.5,
+                      letterSpacing: 4,
+                      color: color.inversePrimary,
                     ),
                   ),
                   const SizedBox(height: 32),
                   SizedBox(
-                    width: 28,
-                    height: 28,
+                    width: 24,
+                    height: 24,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: color.primary,
+                      strokeWidth: 2,
+                      color: color.secondary,
                     ),
                   ),
                 ],

@@ -262,9 +262,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 onPressed: widget.product.stock == 0
                     ? null
                     : () async {
-                        for (int i = 0; i < _quantity; i++) {
-                          await cart.addToCart(widget.product);
-                        }
+                        await cart.addToCart(widget.product, quantity: _quantity);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

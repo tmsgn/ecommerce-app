@@ -84,6 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       
       await result.user!.updateDisplayName(nameController.text.trim());
+      await result.user!.reload();
       
       await FirestoreService().createUserProfile(
         uid: result.user!.uid,

@@ -310,7 +310,7 @@ class FirestoreService {
         .map((snap) => snap.docs.map(CartItem.fromFirestore).toList());
   }
 
-  Future<void> addToCart(String uid, Product product) async {
+  Future<void> addToCart(String uid, Product product, {int quantity = 1}) async {
     final ref = _db
         .collection('users')
         .doc(uid)
@@ -318,14 +318,14 @@ class FirestoreService {
         .doc(product.id);
     final doc = await ref.get();
     if (doc.exists) {
-      await ref.update({'quantity': FieldValue.increment(1)});
+      await ref.update({'quantity': FieldValue.increment(quantity)});
     } else {
       await ref.set({
         'productId': product.id,
         'title': product.title,
         'price': product.price,
         'imageUrl': product.imageUrl,
-        'quantity': 1,
+        'quantity': quantity,
       });
     }
   }

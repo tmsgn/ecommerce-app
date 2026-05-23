@@ -4,7 +4,8 @@ import 'package:ecommerce/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 
 class CategoriesPage extends StatefulWidget {
-  const CategoriesPage({super.key});
+  final String? initialCategory;
+  const CategoriesPage({super.key, this.initialCategory});
 
   @override
   State<CategoriesPage> createState() => _CategoriesPageState();
@@ -13,6 +14,20 @@ class CategoriesPage extends StatefulWidget {
 class _CategoriesPageState extends State<CategoriesPage> {
   String? _selectedCategory;
   final FirestoreService _service = FirestoreService();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.initialCategory;
+  }
+
+  @override
+  void didUpdateWidget(covariant CategoriesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCategory != oldWidget.initialCategory) {
+      _selectedCategory = widget.initialCategory;
+    }
+  }
 
   final List<Map<String, dynamic>> categories = [
     {'title': 'Fashion', 'icon': Icons.checkroom},

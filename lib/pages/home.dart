@@ -8,7 +8,6 @@ import 'package:ecommerce/pages/orders.dart';
 import 'package:ecommerce/pages/profile.dart';
 import 'package:ecommerce/pages/wishlist.dart';
 import 'package:ecommerce/providers/cart_provider.dart';
-import 'package:ecommerce/providers/wishlist_provider.dart';
 import 'package:ecommerce/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -29,12 +28,11 @@ class _HomePageState extends State<HomePage> {
   String _searchQuery = '';
   bool _isSearching = false;
   List<Product> _searchResults = [];
+  String? _selectedCategory;
 
   @override
   void initState() {
     super.initState();
-    context.read<CartProvider>().startListening();
-    context.read<WishlistProvider>().startListening();
     _firestoreService.seedProductsIfEmpty();
   }
 
@@ -61,12 +59,6 @@ class _HomePageState extends State<HomePage> {
     setState(() => _searchResults = results);
   }
 
-  String getName() {
-    final user = FirebaseAuth.instance.currentUser;
-    final name = user?.displayName ?? user?.email?.split('@').first ?? 'Guest';
-    return name.split(' ').first;
-  }
-
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme;
@@ -81,23 +73,32 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         toolbarHeight: 70,
         titleSpacing: 16,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Discover',
-              style: Theme.of(context).textTheme.displaySmall,
-            ),
-            Text(
-              'Good morning, ${getName()}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: color.secondary,
-              ),
-            ),
-          ],
+        title: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.userChanges(),
+          builder: (context, snapshot) {
+            final user = snapshot.data ?? FirebaseAuth.instance.currentUser;
+            final name = user?.displayName ?? user?.email?.split('@').first ?? 'Guest';
+            final firstName = name.split(' ').first;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Discover',
+                  style: Theme.of(context).textTheme.displaySmall,
+                ),
+                Text(
+                  'Good morning, $firstName',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: color.secondary,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         actions: [
           Stack(
@@ -135,7 +136,7 @@ class _HomePageState extends State<HomePage> {
         index: _bottomNavIndex,
         children: [
           _buildHomeTab(color),
-          const CategoriesPage(),
+          CategoriesPage(initialCategory: _selectedCategory),
           const WishlistPage(),
           const OrdersPage(),
           const ProfilePage(),
@@ -224,16 +225,51 @@ class _HomePageState extends State<HomePage> {
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: const [
-                  CategoryCard(title: 'Fashion', icon: Icons.checkroom),
-                  SizedBox(width: 16),
-                  CategoryCard(title: 'Electronics', icon: Icons.phone_iphone),
-                  SizedBox(width: 16),
-                  CategoryCard(title: 'Home', icon: Icons.chair_outlined),
-                  SizedBox(width: 16),
-                  CategoryCard(title: 'Beauty', icon: Icons.face_retouching_natural),
-                  SizedBox(width: 16),
-                  CategoryCard(title: 'Sports', icon: Icons.sports_soccer),
+                children: [
+                  CategoryCard(
+                    title: 'Fashion',
+                    icon: Icons.checkroom,
+                    onTap: () => setState(() {
+                      _selectedCategory = 'Fashion';
+                      _bottomNavIndex = 1;
+                    }),
+                  ),
+                  const SizedBox(width: 16),
+                  CategoryCard(
+                    title: 'Electronics',
+                    icon: Icons.phone_iphone,
+                    onTap: () => setState(() {
+                      _selectedCategory = 'Electronics';
+                      _bottomNavIndex = 1;
+                    }),
+                  ),
+                  const SizedBox(width: 16),
+                  CategoryCard(
+                    title: 'Home',
+                    icon: Icons.chair_outlined,
+                    onTap: () => setState(() {
+                      _selectedCategory = 'Home';
+                      _bottomNavIndex = 1;
+                    }),
+                  ),
+                  const SizedBox(width: 16),
+                  CategoryCard(
+                    title: 'Beauty',
+                    icon: Icons.face_retouching_natural,
+                    onTap: () => setState(() {
+                      _selectedCategory = 'Beauty';
+                      _bottomNavIndex = 1;
+                    }),
+                  ),
+                  const SizedBox(width: 16),
+                  CategoryCard(
+                    title: 'Sports',
+                    icon: Icons.sports_soccer,
+                    onTap: () => setState(() {
+                      _selectedCategory = 'Sports';
+                      _bottomNavIndex = 1;
+                    }),
+                  ),
                 ],
               ),
             ),

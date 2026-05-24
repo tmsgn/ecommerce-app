@@ -53,7 +53,11 @@ class FirestoreService {
 
   Future<void> seedProductsIfEmpty() async {
     final snap = await _db.collection('products').limit(1).get();
-    if (snap.docs.isNotEmpty) return; // Already seeded
+    if (snap.docs.isNotEmpty) {
+      // Already seeded — patch any broken image URLs
+      await patchBrokenImageUrls();
+      return;
+    }
 
     final products = _getSeedProducts();
     final batch = _db.batch();
@@ -62,6 +66,61 @@ class FirestoreService {
       batch.set(ref, p);
     }
     await batch.commit();
+  }
+
+  /// Updates imageUrls for all products by matching on title.
+  /// Runs every launch to fix any broken URLs.
+  Future<void> patchBrokenImageUrls() async {
+    // Map of product title → correct working image URL
+    const titleToImage = {
+      'Wireless Noise-Cancelling Headphones':
+          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
+      'Smart Watch Pro':
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+      'Bluetooth Speaker':
+          'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400',
+      'Mechanical Keyboard':
+          'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400',
+      'Classic Leather Jacket':
+          'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400',
+      'Premium Running Sneakers':
+          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
+      'Casual Backpack':
+          'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+      'Coffee Maker Deluxe':
+          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400',
+      'Scented Candle Set':
+          'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400',
+      'Ergonomic Office Chair':
+          'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400',
+      'Vitamin C Serum':
+          'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400',
+      'Luxury Perfume':
+          'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=400',
+      'Fitness Resistance Bands':
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400',
+      'Yoga Mat Premium':
+          'https://images.unsplash.com/photo-1506126613408-eca07ce68779?w=400',
+      'LEGO Architecture Set':
+          'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
+      'Remote Control Car':
+          'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400',
+    };
+
+    final snap = await _db.collection('products').get();
+    final batch = _db.batch();
+    bool hasChanges = false;
+
+    for (final doc in snap.docs) {
+      final title = doc.data()['title'] as String? ?? '';
+      final correctUrl = titleToImage[title];
+      if (correctUrl != null && doc.data()['imageUrl'] != correctUrl) {
+        batch.update(doc.reference, {'imageUrl': correctUrl});
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) await batch.commit();
   }
 
   List<Map<String, dynamic>> _getSeedProducts() {
@@ -181,7 +240,7 @@ class FirestoreService {
         'description':
             'Set of 3 hand-poured soy candles with calming lavender, vanilla, and sandalwood fragrances. 50-hour burn time each.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1602874801007-bd458bb1a3d2?w=400',
+            'https://images.unsplash.com/photo-1513001900722-370f803f498d?w=400',
         'isFeatured': false,
         'isBestSeller': true,
         'stock': 40,
@@ -221,7 +280,7 @@ class FirestoreService {
         'description':
             'A sophisticated blend of jasmine, bergamot, and sandalwood. Long-lasting 12-hour fragrance in a premium glass bottle.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1541643600914-78b084683702?w=400',
+            'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400',
         'isFeatured': true,
         'isBestSeller': false,
         'stock': 20,

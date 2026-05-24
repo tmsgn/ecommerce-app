@@ -1,8 +1,8 @@
 import 'package:ecommerce/services/firestore_service.dart';
+import 'package:ecommerce/services/google_auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -32,26 +32,15 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> signInWithGoogle(BuildContext context) async {
+    if (!mounted) return;
     setState(() => isGoogleLoading = true);
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      await googleSignIn.signOut();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      
-      if (googleUser == null) {
-        setState(() => isGoogleLoading = false);
+      final result = await GoogleAuthService().signIn();
+      if (result == null) {
         return;
       }
-      
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      
-      final result = await FirebaseAuth.instance.signInWithCredential(credential);
       final user = result.user;
-      
+
       if (user != null) {
         await FirestoreService().createUserProfile(
           uid: user.uid,
@@ -60,11 +49,22 @@ class _RegisterPageState extends State<RegisterPage> {
           photoURL: user.photoURL ?? '',
         );
       }
-      if (mounted) Navigator.pop(context); // Pop back to login which will auto navigate via auth state
+      if (context.mounted) {
+        Navigator.pop(
+            context); // Pop back to login which will auto navigate via auth state
+      }
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? 'Google Sign-In failed')));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Google Sign-In failed')));
+    } on StateError catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sign-In error: ${e.toString()}')));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Google sign-in failed: $e')));
     } finally {
       if (mounted) setState(() => isGoogleLoading = false);
     }
@@ -76,29 +76,37 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
     setState(() => isLoading = true);
-    
+
     try {
       final result = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailAddress.text.trim(),
         password: password.text.trim(),
       );
-      
+
       await result.user!.updateDisplayName(nameController.text.trim());
       await result.user!.reload();
-      
+
       await FirestoreService().createUserProfile(
         uid: result.user!.uid,
         name: nameController.text.trim(),
         email: emailAddress.text.trim(),
       );
-      
-      if (mounted) Navigator.pop(context);
+
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
     } on FirebaseAuthException catch (e) {
       String message = 'Registration failed';
-      if (e.code == 'weak-password') message = 'The password is too weak';
-      else if (e.code == 'email-already-in-use') message = 'Email already in use';
-      else if (e.code == 'invalid-email') message = 'Invalid email';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      if (e.code == 'weak-password') {
+        message = 'The password is too weak';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'Email already in use';
+      } else if (e.code == 'invalid-email') {
+        message = 'Invalid email';
+      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -126,15 +134,19 @@ class _RegisterPageState extends State<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
-                Text('Create Account', style: Theme.of(context).textTheme.displaySmall),
+                Text('Create Account',
+                    style: Theme.of(context).textTheme.displaySmall),
                 const SizedBox(height: 8),
-                Text('Join us and start shopping.', style: TextStyle(color: color.secondary, fontSize: 15)),
+                Text('Join us and start shopping.',
+                    style: TextStyle(color: color.secondary, fontSize: 15)),
                 const SizedBox(height: 40),
 
                 // Name
                 TextFormField(
                   controller: nameController,
-                  validator: (value) => value == null || value.isEmpty ? 'Please enter your name' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter your name'
+                      : null,
                   decoration: const InputDecoration(labelText: 'Full Name'),
                 ),
                 const SizedBox(height: 20),
@@ -143,7 +155,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 TextFormField(
                   controller: emailAddress,
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value == null || value.isEmpty ? 'Please enter your email' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter your email'
+                      : null,
                   decoration: const InputDecoration(labelText: 'Email Address'),
                 ),
                 const SizedBox(height: 20),
@@ -152,15 +166,20 @@ class _RegisterPageState extends State<RegisterPage> {
                 TextFormField(
                   controller: password,
                   obscureText: !isPasswordVisible,
-                  validator: (value) => value != null && value.length < 6 ? 'Password must be at least 6 characters' : null,
+                  validator: (value) => value != null && value.length < 6
+                      ? 'Password must be at least 6 characters'
+                      : null,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: color.secondary,
                       ),
-                      onPressed: () => setState(() => isPasswordVisible = !isPasswordVisible),
+                      onPressed: () => setState(
+                          () => isPasswordVisible = !isPasswordVisible),
                     ),
                   ),
                 ),
@@ -172,7 +191,11 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: ElevatedButton(
                     onPressed: isLoading ? null : () => register(context),
                     child: isLoading
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
                         : const Text('Create Account'),
                   ),
                 ),
@@ -184,7 +207,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     Expanded(child: Divider(color: color.tertiary)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('OR', style: TextStyle(color: color.secondary, fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: Text('OR',
+                          style: TextStyle(
+                              color: color.secondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)),
                     ),
                     Expanded(child: Divider(color: color.tertiary)),
                   ],
@@ -195,17 +222,24 @@ class _RegisterPageState extends State<RegisterPage> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: isGoogleLoading ? null : () => signInWithGoogle(context),
+                    onPressed: isGoogleLoading
+                        ? null
+                        : () => signInWithGoogle(context),
                     icon: isGoogleLoading
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))
                         : const FaIcon(FontAwesomeIcons.google, size: 18),
                     label: const Text('Continue with Google'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: color.inversePrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(color: color.tertiary),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      textStyle: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),

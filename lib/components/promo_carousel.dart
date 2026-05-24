@@ -30,7 +30,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -44,7 +44,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
                       letterSpacing: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     headline,
                     maxLines: 2,
@@ -56,7 +56,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
                       height: 1.1,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     maxLines: 1,
@@ -66,7 +66,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
                       color: Colors.white.withOpacity(0.8),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(

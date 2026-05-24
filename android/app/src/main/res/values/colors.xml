@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Deep black from app theme (Color(0xFF09090B)) -->
+    <color name="splash_background">#09090B</color>
+	<color name="ic_launcher_background">#09090B</color>
+</resources>

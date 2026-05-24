@@ -582,35 +582,200 @@ class ProfilePage extends StatelessWidget {
   }
 
   void _showAboutDialog(BuildContext context, ColorScheme color) {
-    showDialog(
+    const members = [
+      ('BDU1602534', 'Temesgen', 'Tarekegn'),
+      ('BDU1602667', 'Wintana', 'Girma'),
+      ('BDU1602708', 'Yalemzewud', 'Tenaw'),
+      ('BDU1602761', 'Yetmwork', 'Lakachew'),
+      ('BDU1602875', 'Yordanos', 'Tsehay'),
+      ('BDU1602881', 'Yosef', 'Tadesse'),
+      ('BDU1602880', 'Yosef', 'Melaku'),
+      ('BDU1602906', 'Zelalem', 'Ybabe'),
+    ];
+
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: color.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+      backgroundColor: color.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.75,
+        maxChildSize: 0.95,
+        builder: (_, ctrl) => ListView(
+          controller: ctrl,
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
           children: [
-            Icon(Icons.shopping_bag_outlined, size: 48, color: color.inversePrimary),
-            const SizedBox(height: 16),
-            Text('ShopEase', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: color.inversePrimary)),
-            const SizedBox(height: 8),
-            Text('Version 1.0.0', style: TextStyle(color: color.secondary)),
-            const SizedBox(height: 16),
-            Text(
-              'A modern e-commerce platform built with Flutter and Firebase. Shop smarter, live better.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: color.secondary, height: 1.5, fontSize: 14),
+            // Handle
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: color.tertiary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
-            const SizedBox(height: 24),
+            // App icon + name
+            Center(
+              child: Column(
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF09090B),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(Icons.shopping_bag_outlined,
+                        size: 36, color: Colors.white),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('SHOPEASE',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 3,
+                        color: color.inversePrimary,
+                      )),
+                  const SizedBox(height: 4),
+                  Text('Version 1.0.0',
+                      style: TextStyle(color: color.secondary, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'A premium e-commerce app built with Flutter & Firebase.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: color.secondary, fontSize: 13, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            // Project info
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: color.tertiary.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('PROJECT INFO',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: color.secondary,
+                        letterSpacing: 1.5,
+                      )),
+                  const SizedBox(height: 10),
+                  _infoRow('Institution', 'Bahir Dar University', color),
+                  _infoRow('Department', 'Information Technology', color),
+                  _infoRow('Course', 'Mobile App Development', color),
+                  _infoRow('Group', 'Group 7', color),
+                  _infoRow('Platform', 'Flutter + Firebase', color),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Group members
+            Text('GROUP MEMBERS',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: color.secondary,
+                  letterSpacing: 1.5,
+                )),
+            const SizedBox(height: 12),
+            ...members.asMap().entries.map((e) {
+              final i = e.key;
+              final m = e.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: color.tertiary),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color.inversePrimary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text('${i + 1}',
+                            style: TextStyle(
+                              color: color.onPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            )),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${m.$2} ${m.$3}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: color.inversePrimary,
+                                fontSize: 14,
+                              )),
+                          const SizedBox(height: 2),
+                          Text(m.$1,
+                              style: TextStyle(
+                                color: color.secondary,
+                                fontSize: 12,
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(ctx),
                 child: const Text('Close'),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value, ColorScheme color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Text('$label: ',
+              style: TextStyle(
+                  color: color.secondary, fontSize: 13)),
+          Expanded(
+            child: Text(value,
+                style: TextStyle(
+                  color: color.inversePrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                )),
+          ),
+        ],
       ),
     );
   }

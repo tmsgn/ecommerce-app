@@ -73,7 +73,7 @@ class CartPage extends StatelessWidget {
 
   Widget _buildOrderSummary(BuildContext context, CartProvider cart, ColorScheme color) {
     final subtotal = cart.totalAmount;
-    final shipping = subtotal > 50 ? 0.0 : 5.99;
+    const shipping = 50.0;
     final total = subtotal + shipping;
 
     return Container(
@@ -88,9 +88,9 @@ class CartPage extends StatelessWidget {
         children: [
           Text('Order Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color.inversePrimary, letterSpacing: 0.5)),
           const SizedBox(height: 16),
-          _summaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}', color),
+          _summaryRow('Subtotal', 'ETB ${subtotal.toStringAsFixed(0)}', color),
           const SizedBox(height: 12),
-          _summaryRow('Shipping', shipping == 0 ? 'FREE' : '\$${shipping.toStringAsFixed(2)}', color),
+          _summaryRow('Shipping', 'ETB ${shipping.toStringAsFixed(0)}', color),
           const SizedBox(height: 16),
           Divider(color: color.tertiary, height: 1),
           const SizedBox(height: 16),
@@ -98,7 +98,7 @@ class CartPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color.inversePrimary)),
-              Text('\$${total.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: color.inversePrimary)),
+              Text('ETB ${total.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: color.inversePrimary)),
             ],
           ),
           const SizedBox(height: 24),
@@ -107,7 +107,7 @@ class CartPage extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => CheckoutPage(cartItems: cart.items, totalAmount: total)),
+                MaterialPageRoute(builder: (_) => CheckoutPage(cartItems: cart.items, totalAmount: subtotal)),
               ),
               child: const Text('Proceed to Checkout'),
             ),
@@ -172,7 +172,7 @@ class _CartItemTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text('\$${item.price.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: color.inversePrimary)),
+                  Text('ETB ${item.price.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.w600, color: color.inversePrimary)),
                 ],
               ),
               const SizedBox(height: 12),

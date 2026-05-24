@@ -70,6 +70,20 @@ class FirestoreService {
       }
       if (hasDups) await batch.commit();
 
+      // Migrate prices: if any product has price < 1000, scale it by 100 to be realistic ETB
+      final priceBatch = _db.batch();
+      bool hasPriceMigration = false;
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final priceVal = (data['price'] as num?)?.toDouble() ?? 0.0;
+        if (priceVal < 1000) {
+          final newPrice = (priceVal * 100).roundToDouble();
+          priceBatch.update(doc.reference, {'price': newPrice});
+          hasPriceMigration = true;
+        }
+      }
+      if (hasPriceMigration) await priceBatch.commit();
+
       // Fix any broken image URLs
       await patchBrokenImageUrls();
       return;
@@ -79,7 +93,11 @@ class FirestoreService {
     final writeBatch = _db.batch();
     for (final p in products) {
       final ref = _db.collection('products').doc();
-      writeBatch.set(ref, p);
+      final basePrice = (p['price'] as num?)?.toDouble() ?? 0.0;
+      final scaledPrice = (basePrice * 100).roundToDouble();
+      final pCopy = Map<String, dynamic>.from(p);
+      pCopy['price'] = scaledPrice;
+      writeBatch.set(ref, pCopy);
     }
     await writeBatch.commit();
   }
@@ -87,40 +105,39 @@ class FirestoreService {
   /// Updates imageUrls for all products by matching on title.
   /// Runs every launch to fix any broken URLs.
   Future<void> patchBrokenImageUrls() async {
-    // Map of product title → correct working image URL
     const titleToImage = {
       'Wireless Noise-Cancelling Headphones':
-          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
+          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
       'Smart Watch Pro':
-          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
       'Bluetooth Speaker':
-          'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400',
+          'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&auto=format&fit=crop&q=80',
       'Mechanical Keyboard':
-          'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400',
+          'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&auto=format&fit=crop&q=80',
       'Classic Leather Jacket':
-          'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400',
+          'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80',
       'Premium Running Sneakers':
-          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
+          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
       'Casual Backpack':
-          'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+          'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80',
       'Coffee Maker Deluxe':
-          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400',
+          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&auto=format&fit=crop&q=80',
       'Scented Candle Set':
-          'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400',
+          'https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600&auto=format&fit=crop&q=80',
       'Ergonomic Office Chair':
-          'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400',
+          'https://images.unsplash.com/photo-1505797149-43b0069ec26b?w=600&auto=format&fit=crop&q=80',
       'Vitamin C Serum':
-          'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400',
+          'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=600&auto=format&fit=crop&q=80',
       'Luxury Perfume':
-          'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=400',
+          'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&auto=format&fit=crop&q=80',
       'Fitness Resistance Bands':
-          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400',
+          'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
       'Yoga Mat Premium':
-          'https://images.unsplash.com/photo-1506126613408-eca07ce68779?w=400',
+          'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&auto=format&fit=crop&q=80',
       'LEGO Architecture Set':
-          'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
+          'https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=600&auto=format&fit=crop&q=80',
       'Remote Control Car':
-          'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400',
+          'https://images.unsplash.com/photo-1594786118579-95ba90c801ec?w=600&auto=format&fit=crop&q=80',
     };
 
     final snap = await _db.collection('products').get();
@@ -150,7 +167,7 @@ class FirestoreService {
         'description':
             'Premium wireless headphones with active noise cancellation, 30-hour battery life, and crystal-clear audio. Perfect for work, travel, and everything in between.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
+            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
         'isFeatured': true,
         'isBestSeller': false,
         'stock': 25,
@@ -163,7 +180,7 @@ class FirestoreService {
         'description':
             'Feature-packed smartwatch with health monitoring, GPS tracking, 5-day battery, and a gorgeous AMOLED display.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
         'isFeatured': true,
         'isBestSeller': true,
         'stock': 18,
@@ -176,7 +193,7 @@ class FirestoreService {
         'description':
             '360° surround sound, waterproof design, and 12-hour playtime. The perfect companion for outdoor adventures.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400',
+            'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': true,
         'stock': 30,
@@ -189,7 +206,7 @@ class FirestoreService {
         'description':
             'TKL mechanical keyboard with RGB backlight, tactile switches, and a durable aluminum frame for pro gamers and typists.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400',
+            'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': false,
         'stock': 15,
@@ -203,7 +220,7 @@ class FirestoreService {
         'description':
             'Genuine leather jacket with a timeless biker silhouette. Soft inner lining, heavy-duty zipper, and a perfect slim fit.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400',
+            'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80',
         'isFeatured': true,
         'isBestSeller': true,
         'stock': 12,
@@ -216,7 +233,7 @@ class FirestoreService {
         'description':
             'Lightweight and breathable sneakers with cushioned sole technology. Built for performance and all-day comfort.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': true,
         'stock': 22,
@@ -229,7 +246,7 @@ class FirestoreService {
         'description':
             'Spacious 30L backpack with laptop compartment, USB charging port, and ergonomic shoulder straps.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400',
+            'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': false,
         'stock': 28,
@@ -243,7 +260,7 @@ class FirestoreService {
         'description':
             'Brew barista-quality coffee at home. Programmable timer, thermal carafe, and built-in grinder included.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1512568400610-62da28bc8a13?w=400',
+            'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&auto=format&fit=crop&q=80',
         'isFeatured': true,
         'isBestSeller': false,
         'stock': 10,
@@ -256,7 +273,7 @@ class FirestoreService {
         'description':
             'Set of 3 hand-poured soy candles with calming lavender, vanilla, and sandalwood fragrances. 50-hour burn time each.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1513001900722-370f803f498d?w=400',
+            'https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': true,
         'stock': 40,
@@ -269,7 +286,7 @@ class FirestoreService {
         'description':
             'Fully adjustable lumbar support, breathable mesh back, and 360° swivel. Work comfortably for hours.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1567538096621-38d2284b23ff?w=400',
+            'https://images.unsplash.com/photo-1505797149-43b0069ec26b?w=600&auto=format&fit=crop&q=80',
         'isFeatured': true,
         'isBestSeller': false,
         'stock': 8,
@@ -283,7 +300,7 @@ class FirestoreService {
         'description':
             'Brightening serum with 20% Vitamin C, hyaluronic acid, and niacinamide. Reduces dark spots and boosts radiance.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400',
+            'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': true,
         'stock': 35,
@@ -296,7 +313,7 @@ class FirestoreService {
         'description':
             'A sophisticated blend of jasmine, bergamot, and sandalwood. Long-lasting 12-hour fragrance in a premium glass bottle.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400',
+            'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&auto=format&fit=crop&q=80',
         'isFeatured': true,
         'isBestSeller': false,
         'stock': 20,
@@ -310,7 +327,7 @@ class FirestoreService {
         'description':
             'Set of 5 resistance bands with varying tension levels. Ideal for home workouts, stretching, and physical therapy.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1598971861713-54ad16a7e72e?w=400',
+            'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': true,
         'stock': 50,
@@ -323,7 +340,7 @@ class FirestoreService {
         'description':
             '6mm thick eco-friendly non-slip yoga mat with alignment lines and carrying strap. Perfect for yoga, pilates, and stretching.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400',
+            'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': false,
         'stock': 45,
@@ -337,7 +354,7 @@ class FirestoreService {
         'description':
             '780-piece LEGO set to build iconic skylines. Perfect for ages 12+ and adult collectors who love detailed builds.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400',
+            'https://images.unsplash.com/photo-1560942485-b2a11cc13456?w=600&auto=format&fit=crop&q=80',
         'isFeatured': true,
         'isBestSeller': false,
         'stock': 16,
@@ -350,7 +367,7 @@ class FirestoreService {
         'description':
             'High-speed 1:16 scale RC car with 4WD, 2.4GHz remote, and 30min runtime. Great for kids 6+.',
         'imageUrl':
-            'https://images.unsplash.com/photo-1594751543129-6701ad444259?w=400',
+            'https://images.unsplash.com/photo-1594786118579-95ba90c801ec?w=600&auto=format&fit=crop&q=80',
         'isFeatured': false,
         'isBestSeller': true,
         'stock': 22,
@@ -533,6 +550,16 @@ class FirestoreService {
   }
 
   // ─── Shipping Addresses ───────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getAddressesOnce(String uid) async {
+    final snap = await _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .orderBy('createdAt', descending: false)
+        .get();
+    return snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+  }
 
   Stream<List<Map<String, dynamic>>> getAddresses(String uid) {
     return _db

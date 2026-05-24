@@ -313,57 +313,87 @@ class ProfilePage extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Edit Profile', style: Theme.of(context).textTheme.titleLarge),
-                IconButton(icon: Icon(Icons.close, color: color.secondary), onPressed: () => Navigator.pop(ctx)),
-              ],
-            ),
-            const SizedBox(height: 24),
-            TextFormField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Display Name'),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              initialValue: user?.email ?? '',
-              enabled: false,
-              decoration: const InputDecoration(labelText: 'Email Address'),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (nameCtrl.text.trim().isNotEmpty) {
-                    await user?.updateDisplayName(nameCtrl.text.trim());
-                    await user?.reload();
-                    await FirestoreService().createUserProfile(
-                      uid: user?.uid ?? '',
-                      name: nameCtrl.text.trim(),
-                      email: user?.email ?? '',
-                    );
-                  }
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profile updated'), behavior: SnackBarBehavior.floating),
-                    );
-                  }
-                },
-                child: const Text('Save Changes'),
+      builder: (ctx) {
+        bool isLoading = false;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Edit Profile', style: Theme.of(context).textTheme.titleLarge),
+                      IconButton(
+                        icon: Icon(Icons.close, color: color.secondary),
+                        onPressed: isLoading ? null : () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(labelText: 'Display Name'),
+                    enabled: !isLoading,
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    initialValue: user?.email ?? '',
+                    enabled: false,
+                    decoration: const InputDecoration(labelText: 'Email Address'),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isLoading
+                          ? null
+                          : () async {
+                              if (nameCtrl.text.trim().isNotEmpty) {
+                                setSheetState(() => isLoading = true);
+                                try {
+                                  await user?.updateDisplayName(nameCtrl.text.trim());
+                                  await user?.reload();
+                                  await FirestoreService().createUserProfile(
+                                    uid: user?.uid ?? '',
+                                    name: nameCtrl.text.trim(),
+                                    email: user?.email ?? '',
+                                  );
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Profile updated'), behavior: SnackBarBehavior.floating),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error: $e'), behavior: SnackBarBehavior.floating),
+                                    );
+                                  }
+                                } finally {
+                                  setSheetState(() => isLoading = false);
+                                }
+                              }
+                            },
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text('Save Changes'),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -467,81 +497,111 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: color.surface,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-            24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
-        child: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Add Address',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  IconButton(
-                      icon: Icon(Icons.close, color: color.secondary),
-                      onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: labelCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'Label (e.g. Home, Work)'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: phoneCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                    labelText: 'Phone (e.g. 0911234567)'),
-                validator: (v) =>
-                    v == null || v.length < 10 ? 'Enter valid phone' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: streetCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'Street / Kebele / Woreda'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: cityCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'City (e.g. Addis Ababa)'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (formKey.currentState!.validate()) {
-                      await FirestoreService().addAddress(uid, {
-                        'label': labelCtrl.text.trim(),
-                        'phone': phoneCtrl.text.trim(),
-                        'street': streetCtrl.text.trim(),
-                        'city': cityCtrl.text.trim(),
-                        'isDefault': false,
-                      });
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    }
-                  },
-                  child: const Text('Save Address'),
+      builder: (ctx) {
+        bool isLoading = false;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                  24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Add Address',
+                            style: Theme.of(context).textTheme.titleLarge),
+                        IconButton(
+                            icon: Icon(Icons.close, color: color.secondary),
+                            onPressed: isLoading ? null : () => Navigator.pop(ctx)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: labelCtrl,
+                      decoration: const InputDecoration(
+                          labelText: 'Label (e.g. Home, Work)'),
+                      enabled: !isLoading,
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: 'Phone (e.g. 0911234567)'),
+                      enabled: !isLoading,
+                      validator: (v) =>
+                          v == null || v.length < 10 ? 'Enter valid phone' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: streetCtrl,
+                      decoration: const InputDecoration(
+                          labelText: 'Street / Kebele / Woreda'),
+                      enabled: !isLoading,
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: cityCtrl,
+                      decoration: const InputDecoration(
+                          labelText: 'City (e.g. Addis Ababa)'),
+                      enabled: !isLoading,
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (formKey.currentState!.validate()) {
+                                  setSheetState(() => isLoading = true);
+                                  try {
+                                    await FirestoreService().addAddress(uid, {
+                                      'label': labelCtrl.text.trim(),
+                                      'phone': phoneCtrl.text.trim(),
+                                      'street': streetCtrl.text.trim(),
+                                      'city': cityCtrl.text.trim(),
+                                      'isDefault': false,
+                                    });
+                                    if (ctx.mounted) Navigator.pop(ctx);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Error: $e'), behavior: SnackBarBehavior.floating),
+                                      );
+                                    }
+                                  } finally {
+                                    setSheetState(() => isLoading = false);
+                                  }
+                                }
+                              },
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Text('Save Address'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 

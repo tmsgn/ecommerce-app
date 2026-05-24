@@ -29,6 +29,35 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool _isPlacingOrder = false;
   String _selectedPayment = 'telebirr';
 
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaultAddress();
+  }
+
+  Future<void> _loadDefaultAddress() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final addresses = await FirestoreService().getAddressesOnce(uid);
+      if (addresses.isNotEmpty) {
+        final defaultAddress = addresses.firstWhere(
+          (addr) => addr['isDefault'] == true,
+          orElse: () => addresses.first,
+        );
+        setState(() {
+          final user = FirebaseAuth.instance.currentUser;
+          _nameController.text = user?.displayName ?? defaultAddress['label'] ?? 'Home';
+          _phoneController.text = defaultAddress['phone'] ?? '';
+          _addressController.text = defaultAddress['street'] ?? '';
+          _cityController.text = defaultAddress['city'] ?? '';
+        });
+      }
+    } catch (e) {
+      // Background populating error is silently handled
+    }
+  }
+
   static const _paymentMethods = [
     _PaymentMethod(
       id: 'telebirr',
@@ -90,7 +119,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       await FirestoreService().placeOrder(
         uid: uid,
         cartItems: widget.cartItems,
-        totalAmount: widget.totalAmount,
+        totalAmount: widget.totalAmount + 50,
         address: address,
       );
 

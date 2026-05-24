@@ -91,7 +91,7 @@ class OrdersPage extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '\$${((item['price'] as num) * (item['quantity'] as num)).toStringAsFixed(2)}',
+                                'ETB ${((item['price'] as num) * (item['quantity'] as num)).toStringAsFixed(0)}',
                                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color.inversePrimary),
                               ),
                             ],
@@ -122,7 +122,7 @@ class OrdersPage extends StatelessWidget {
                             Text('TOTAL', style: TextStyle(color: color.secondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                             const SizedBox(height: 4),
                             Text(
-                              '\$${order.totalAmount.toStringAsFixed(2)}',
+                              'ETB ${order.totalAmount.toStringAsFixed(0)}',
                               style: TextStyle(fontWeight: FontWeight.bold, color: color.inversePrimary, fontSize: 16),
                             ),
                           ],

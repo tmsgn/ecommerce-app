@@ -113,7 +113,7 @@ class _PromoCarouselState extends State<PromoCarousel> {
               context: context,
               title: "New Arrivals",
               headline: "Smart\nWatches",
-              subtitle: "Starting from \$89",
+              subtitle: "Starting from ETB 4,999",
               bgColor: const Color(0xFF4B5563), // Slate gray
               imageWidget: Icon(Icons.watch_outlined, size: 80, color: Colors.white.withOpacity(0.9)),
             ),

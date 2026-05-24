@@ -368,54 +368,197 @@ class ProfilePage extends StatelessWidget {
   }
 
   void _showAddressSheet(BuildContext context, ColorScheme color) {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     showModalBottomSheet(
       context: context,
       backgroundColor: color.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.95,
+        builder: (_, ctrl) => StreamBuilder<List<Map<String, dynamic>>>(
+          stream: FirestoreService().getAddresses(uid),
+          builder: (context, snap) {
+            final addresses = snap.data ?? [];
+            return ListView(
+              controller: ctrl,
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               children: [
-                Text('Shipping Addresses', style: Theme.of(context).textTheme.titleLarge),
-                IconButton(icon: Icon(Icons.close, color: color.secondary), onPressed: () => Navigator.pop(ctx)),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _addressTile('Home', '123 Main Street, New York, NY 10001', true, color),
-            const SizedBox(height: 12),
-            _addressTile('Work', '456 Office Park, San Francisco, CA 94102', false, color),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.pop(ctx),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add New Address'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: color.inversePrimary,
-                  side: BorderSide(color: color.tertiary),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                Center(
+                  child: Container(
+                    width: 36, height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                        color: color.tertiary,
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-              ),
-            ),
-          ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Delivery Addresses',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    IconButton(
+                        icon: Icon(Icons.close, color: color.secondary),
+                        onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (addresses.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text('No addresses saved yet.',
+                          style: TextStyle(color: color.secondary)),
+                    ),
+                  )
+                else
+                  ...addresses.map((addr) => _addressTile(
+                    addr['label'] ?? 'Home',
+                    '${addr['street']}, ${addr['city']} | ${addr['phone']}',
+                    addr['isDefault'] == true,
+                    color,
+                    onDelete: () => FirestoreService()
+                        .deleteAddress(uid, addr['id']),
+                    onSetDefault: () => FirestoreService()
+                        .setDefaultAddress(uid, addr['id']),
+                  )),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showAddAddressSheet(context, color, uid);
+                    },
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add New Address'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: color.inversePrimary,
+                      side: BorderSide(color: color.tertiary),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _addressTile(String label, String address, bool isDefault, ColorScheme color) {
+  void _showAddAddressSheet(
+      BuildContext context, ColorScheme color, String uid) {
+    final labelCtrl = TextEditingController();
+    final streetCtrl = TextEditingController();
+    final cityCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: color.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+            24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
+        child: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Add Address',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  IconButton(
+                      icon: Icon(Icons.close, color: color.secondary),
+                      onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: labelCtrl,
+                decoration: const InputDecoration(
+                    labelText: 'Label (e.g. Home, Work)'),
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                    labelText: 'Phone (e.g. 0911234567)'),
+                validator: (v) =>
+                    v == null || v.length < 10 ? 'Enter valid phone' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: streetCtrl,
+                decoration: const InputDecoration(
+                    labelText: 'Street / Kebele / Woreda'),
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: cityCtrl,
+                decoration: const InputDecoration(
+                    labelText: 'City (e.g. Addis Ababa)'),
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (formKey.currentState!.validate()) {
+                      await FirestoreService().addAddress(uid, {
+                        'label': labelCtrl.text.trim(),
+                        'phone': phoneCtrl.text.trim(),
+                        'street': streetCtrl.text.trim(),
+                        'city': cityCtrl.text.trim(),
+                        'isDefault': false,
+                      });
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    }
+                  },
+                  child: const Text('Save Address'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _addressTile(
+    String label,
+    String address,
+    bool isDefault,
+    ColorScheme color, {
+    VoidCallback? onDelete,
+    VoidCallback? onSetDefault,
+  }) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: isDefault ? color.inversePrimary : color.tertiary),
+        border: Border.all(
+            color: isDefault ? color.inversePrimary : color.tertiary),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -429,74 +572,198 @@ class ProfilePage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: color.inversePrimary)),
+                    Text(label,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: color.inversePrimary)),
                     if (isDefault) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(color: color.inversePrimary, borderRadius: BorderRadius.circular(4)),
-                        child: Text('DEFAULT', style: TextStyle(color: color.onPrimary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                            color: color.inversePrimary,
+                            borderRadius: BorderRadius.circular(4)),
+                        child: Text('DEFAULT',
+                            style: TextStyle(
+                                color: color.onPrimary,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5)),
                       ),
                     ],
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(address, style: TextStyle(color: color.secondary, fontSize: 13, height: 1.4)),
+                Text(address,
+                    style: TextStyle(
+                        color: color.secondary, fontSize: 13, height: 1.4)),
               ],
             ),
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: color.secondary, size: 18),
+            color: color.surface,
+            onSelected: (v) {
+              if (v == 'default') onSetDefault?.call();
+              if (v == 'delete') onDelete?.call();
+            },
+            itemBuilder: (_) => [
+              if (!isDefault)
+                const PopupMenuItem(
+                    value: 'default', child: Text('Set as default')),
+              const PopupMenuItem(
+                  value: 'delete', child: Text('Delete')),
+            ],
           ),
         ],
       ),
     );
   }
 
+  // ─── Ethiopian payment methods ────────────────────────────────────────────
+
+  static const _ethiopianPaymentsList = [
+    {'id': 'telebirr', 'name': 'TeleBirr', 'sub': 'Ethio Telecom'},
+    {'id': 'cbebirr', 'name': 'CBE Birr', 'sub': 'Commercial Bank of Ethiopia'},
+    {'id': 'awash', 'name': 'Awash Bank', 'sub': 'Awash Mobile Banking'},
+    {'id': 'dashen', 'name': 'Dashen / Amole', 'sub': 'Dashen Bank digital wallet'},
+    {'id': 'cash', 'name': 'Cash on Delivery', 'sub': 'Pay when you receive'},
+  ];
+
+  static IconData _paymentIcon(String id) {
+    switch (id) {
+      case 'telebirr': return Icons.phone_android;
+      case 'cbebirr': return Icons.account_balance;
+      case 'awash': return Icons.account_balance_wallet;
+      case 'dashen': return Icons.credit_card;
+      default: return Icons.local_shipping_outlined;
+    }
+  }
+
   void _showPaymentSheet(BuildContext context, ColorScheme color) {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     showModalBottomSheet(
       context: context,
       backgroundColor: color.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.65,
+        maxChildSize: 0.95,
+        builder: (_, ctrl) => StreamBuilder<List<Map<String, dynamic>>>(
+          stream: FirestoreService().getPaymentMethods(uid),
+          builder: (context, snap) {
+            final saved = snap.data ?? [];
+            return ListView(
+              controller: ctrl,
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               children: [
-                Text('Payment Methods', style: Theme.of(context).textTheme.titleLarge),
-                IconButton(icon: Icon(Icons.close, color: color.secondary), onPressed: () => Navigator.pop(ctx)),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _paymentTile('Visa', '**** **** **** 4242', Icons.credit_card, color),
-            const SizedBox(height: 12),
-            _paymentTile('PayPal', 'user@email.com', Icons.account_balance_wallet_outlined, color),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.pop(ctx),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Payment Method'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: color.inversePrimary,
-                  side: BorderSide(color: color.tertiary),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                Center(
+                  child: Container(
+                    width: 36, height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                        color: color.tertiary,
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-              ),
-            ),
-          ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Payment Methods',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    IconButton(
+                        icon: Icon(Icons.close, color: color.secondary),
+                        onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text('AVAILABLE METHODS',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: color.secondary,
+                        letterSpacing: 1.5)),
+                const SizedBox(height: 12),
+                ..._ethiopianPaymentsList.map((p) => _paymentTile(
+                    p['name'] as String,
+                    p['sub'] as String,
+                    _paymentIcon(p['id'] as String),
+                    color,
+                    onAdd: () async {
+                      await FirestoreService().addPaymentMethod(uid, {
+                        'type': p['id'],
+                        'name': p['name'],
+                      });
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(
+                            content: Text('${p['name']} added'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                  )),
+                if (saved.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Text('SAVED METHODS',
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: color.secondary,
+                          letterSpacing: 1.5)),
+                  const SizedBox(height: 12),
+                  ...saved.map((m) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: color.inversePrimary),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle,
+                            color: color.inversePrimary, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(m['name'] ?? '',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: color.inversePrimary)),
+                        ),
+                        GestureDetector(
+                          onTap: () => FirestoreService()
+                              .deletePaymentMethod(uid, m['id']),
+                          child: Icon(Icons.delete_outline,
+                              color: color.secondary, size: 18),
+                        ),
+                      ],
+                    ),
+                  )),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _paymentTile(String name, String detail, IconData icon, ColorScheme color) {
+  Widget _paymentTile(
+    String name,
+    String detail,
+    IconData icon,
+    ColorScheme color, {
+    VoidCallback? onAdd,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         border: Border.all(color: color.tertiary),
         borderRadius: BorderRadius.circular(12),
@@ -509,13 +776,27 @@ class ProfilePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(fontWeight: FontWeight.bold, color: color.inversePrimary)),
+                Text(name,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: color.inversePrimary)),
                 const SizedBox(height: 2),
-                Text(detail, style: TextStyle(color: color.secondary, fontSize: 13)),
+                Text(detail,
+                    style:
+                        TextStyle(color: color.secondary, fontSize: 13)),
               ],
             ),
           ),
-          Icon(Icons.more_horiz, color: color.secondary),
+          TextButton(
+            onPressed: onAdd,
+            style: TextButton.styleFrom(
+                foregroundColor: color.inversePrimary,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 6),
+                textStyle: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600)),
+            child: const Text('Add'),
+          ),
         ],
       ),
     );

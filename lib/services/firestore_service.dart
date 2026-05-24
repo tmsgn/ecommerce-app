@@ -52,20 +52,36 @@ class FirestoreService {
   // ─── Seed Products ────────────────────────────────────────────────────────
 
   Future<void> seedProductsIfEmpty() async {
-    final snap = await _db.collection('products').limit(1).get();
+    final snap = await _db.collection('products').get();
+
     if (snap.docs.isNotEmpty) {
-      // Already seeded — patch any broken image URLs
+      // Deduplicate: remove extra docs with the same title, keep the first
+      final seen = <String>{};
+      final batch = _db.batch();
+      bool hasDups = false;
+      for (final doc in snap.docs) {
+        final title = doc.data()['title'] as String? ?? '';
+        if (seen.contains(title)) {
+          batch.delete(doc.reference);
+          hasDups = true;
+        } else {
+          seen.add(title);
+        }
+      }
+      if (hasDups) await batch.commit();
+
+      // Fix any broken image URLs
       await patchBrokenImageUrls();
       return;
     }
 
     final products = _getSeedProducts();
-    final batch = _db.batch();
+    final writeBatch = _db.batch();
     for (final p in products) {
       final ref = _db.collection('products').doc();
-      batch.set(ref, p);
+      writeBatch.set(ref, p);
     }
-    await batch.commit();
+    await writeBatch.commit();
   }
 
   /// Updates imageUrls for all products by matching on title.
@@ -514,5 +530,82 @@ class FirestoreService {
       'createdAt': FieldValue.serverTimestamp(),
     });
     await clearCart(uid);
+  }
+
+  // ─── Shipping Addresses ───────────────────────────────────────────────────
+
+  Stream<List<Map<String, dynamic>>> getAddresses(String uid) {
+    return _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => {'id': d.id, ...d.data()})
+            .toList());
+  }
+
+  Future<void> addAddress(String uid, Map<String, dynamic> address) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .add({...address, 'createdAt': FieldValue.serverTimestamp()});
+  }
+
+  Future<void> deleteAddress(String uid, String addressId) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .doc(addressId)
+        .delete();
+  }
+
+  Future<void> setDefaultAddress(String uid, String addressId) async {
+    // Clear existing defaults then set new one
+    final snap = await _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .get();
+    final batch = _db.batch();
+    for (final doc in snap.docs) {
+      batch.update(doc.reference, {'isDefault': doc.id == addressId});
+    }
+    await batch.commit();
+  }
+
+  // ─── Payment Methods ──────────────────────────────────────────────────────
+
+  Stream<List<Map<String, dynamic>>> getPaymentMethods(String uid) {
+    return _db
+        .collection('users')
+        .doc(uid)
+        .collection('paymentMethods')
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => {'id': d.id, ...d.data()})
+            .toList());
+  }
+
+  Future<void> addPaymentMethod(
+      String uid, Map<String, dynamic> method) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('paymentMethods')
+        .add({...method, 'createdAt': FieldValue.serverTimestamp()});
+  }
+
+  Future<void> deletePaymentMethod(String uid, String methodId) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('paymentMethods')
+        .doc(methodId)
+        .delete();
   }
 }

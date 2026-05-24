@@ -133,7 +133,7 @@ class ProductCard extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      '\$${product.price.toStringAsFixed(2)}',
+                      'ETB ${product.price.toStringAsFixed(0)}',
                       style: TextStyle(
                         color: color.inversePrimary,
                         fontWeight: FontWeight.bold,

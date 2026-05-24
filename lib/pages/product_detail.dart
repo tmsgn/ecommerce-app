@@ -121,7 +121,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              '\$${widget.product.price.toStringAsFixed(2)}',
+                              'ETB ${widget.product.price.toStringAsFixed(0)}',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -251,7 +251,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               children: [
                 Text('Total', style: TextStyle(fontSize: 12, color: color.secondary)),
                 Text(
-                  '\$${(widget.product.price * _quantity).toStringAsFixed(2)}',
+                  'ETB ${(widget.product.price * _quantity).toStringAsFixed(0)}',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color.inversePrimary),
                 ),
               ],

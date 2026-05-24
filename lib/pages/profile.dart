@@ -675,7 +675,7 @@ class ProfilePage extends StatelessWidget {
                       )),
                   const SizedBox(height: 10),
                   _infoRow('Institution', 'Bahir Dar University', color),
-                  _infoRow('Department', 'Information Technology', color),
+                  _infoRow('Department', 'Computer Science', color),
                   _infoRow('Course', 'Mobile App Development', color),
                   _infoRow('Group', 'Group 7', color),
                   _infoRow('Platform', 'Flutter + Firebase', color),

@@ -1,7 +1,7 @@
 # SHOPEASE — Mobile E-Commerce App
 
 **Group 7 | Mobile App Development Assignment**  
-**Bahir Dar University — Department of Information Technology**
+**Bahir Dar University — Department of Computer Science**
 
 ---
 
